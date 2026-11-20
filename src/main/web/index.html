@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OBJ Dashboard</title>
+  <link rel="stylesheet" href="/objdash/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">OBJ Dashboard</div>
+    <div class="opctl" role="group" aria-label="OpMode control">
+      <select id="op-select" class="input op-select" aria-label="OpMode"></select>
+      <button id="op-main" class="btn btn-primary op-main">INIT</button>
+      <button id="op-cancel" class="btn btn-stop op-cancel" title="Stop" aria-label="Stop" hidden>■</button>
+      <span id="op-space" class="op-hint" hidden>(Press SPACE to Stop)</span>
+      <span id="op-hint" class="op-hint" hidden></span>
+    </div>
+    <div class="status">
+      <span id="conn" class="pill pill-bad"><span class="dot"></span><span id="conn-text">Connecting…</span></span>
+      <span id="opmode" class="opmode">No OpMode yet</span>
+      <span id="opstate" class="pill pill-muted">idle</span>
+    </div>
+  </header>
+
+  <div id="viewing" class="banner" hidden>
+    <span>Viewing saved run <strong id="viewing-name"></strong></span>
+    <button id="back-live" class="btn btn-small">Back to live</button>
+  </div>
+
+  <main class="layout">
+    <div class="side">
+    <section class="panel config">
+      <div class="panel-head">
+        <h2>Config</h2>
+        <button id="cfg-refresh" class="btn btn-small">Refresh</button>
+      </div>
+      <p class="hint">Changes apply on Enter or when you leave the box. They reset when the robot restarts or OnBot Java rebuilds.</p>
+      <div id="cfg-body"></div>
+      <p id="cfg-empty" class="empty"><span id="cfg-empty-op" hidden><span id="cfg-empty-op-name"></span> doesn't use any <code>@ObjConfig</code> classes.</span><span id="cfg-empty-all">No <code>@ObjConfig</code> classes found.</span> Add <code>@ObjConfig</code> above a class with <code>public static</code> fields, build, and click Refresh.</p>
+      <details id="cfg-scan" class="cfg-scan" hidden>
+        <summary>Scan details</summary>
+        <p id="cfg-scan-summary"></p>
+        <ul id="cfg-scan-notes"></ul>
+      </details>
+      <p id="cfg-error" class="error" hidden></p>
+    </section>
+
+    <section class="panel telemetry">
+      <div class="panel-head">
+        <h2>Telemetry</h2>
+        <input id="filter" class="input input-small" type="search" placeholder="Filter" aria-label="Filter telemetry">
+      </div>
+      <p class="hint">Check a data source to graph it.</p>
+      <table class="ttable">
+        <tbody id="tbody"></tbody>
+      </table>
+      <p id="empty" class="empty">No telemetry yet. In your OpMode, call<br><code>ObjDash.put("name", value);</code></p>
+    </section>
+    </div>
+
+    <section class="panel graph">
+      <div class="toolbar">
+        <div class="seg" id="window" role="group" aria-label="Time window">
+          <button data-w="1">1s</button>
+          <button data-w="2">2s</button>
+          <button data-w="5">5s</button>
+          <button data-w="10">10s</button>
+          <button data-w="30">30s</button>
+          <button data-w="60">60s</button>
+          <button data-w="0">All</button>
+        </div>
+        <button id="pause" class="btn">Pause</button>
+        <button id="zoom-reset" class="btn btn-zoom" hidden>Reset zoom</button>
+        <span class="spacer"></span>
+        <button id="open" class="btn">Open…</button>
+        <button id="save" class="btn btn-primary">Save to robot…</button>
+        <button id="png" class="btn">Export PNG</button>
+      </div>
+      <div class="legend-row">
+        <div id="legend" class="legend"></div>
+        <span class="zoom-hint">Drag across the graph to zoom, get statistics, or fit a line · double-click to reset zoom</span>
+      </div>
+      <div class="chart-area">
+        <div class="chart-wrap">
+          <canvas id="chart"></canvas>
+          <div id="chart-empty" class="chart-empty">Pick values to graph from the telemetry list.</div>
+          <div id="pick-menu" class="pick-menu" role="menu" hidden>
+            <span id="pick-label" class="pick-label"></span>
+            <button type="button" data-act="zoom" role="menuitem">Zoom</button>
+            <button type="button" data-act="stats" role="menuitem">Statistics</button>
+            <button type="button" data-act="reg" role="menuitem">Regression</button>
+            <button type="button" data-act="cancel" class="pick-cancel" title="Cancel (Esc)" aria-label="Cancel">×</button>
+          </div>
+        </div>
+        <aside id="analysis" class="analysis" hidden>
+          <div class="analysis-inner">
+            <div class="analysis-head">
+              <h3>Analysis</h3>
+              <button id="analysis-clear" type="button" class="btn btn-small">Clear all</button>
+            </div>
+            <div id="analysis-list"></div>
+          </div>
+        </aside>
+      </div>
+      <p id="storage-warning" class="warning" hidden>This run is too large to keep in the browser after a refresh. Save it to the robot to keep it.</p>
+    </section>
+  </main>
+
+  <dialog id="save-dialog" class="dialog">
+    <form method="dialog" id="save-form">
+      <h3>Save run to robot</h3>
+      <label class="field">
+        <span>Folder</span>
+        <input id="save-folder" class="input" list="folder-list" required autocomplete="off">
+        <datalist id="folder-list"></datalist>
+      </label>
+      <label class="field">
+        <span>File name</span>
+        <input id="save-name" class="input" required autocomplete="off">
+      </label>
+      <p class="path">Saves to <code id="save-path"></code></p>
+      <p id="save-error" class="error" hidden></p>
+      <div class="actions">
+        <button value="cancel" formnovalidate class="btn">Cancel</button>
+        <button id="save-confirm" value="save" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="open-dialog" class="dialog">
+    <form method="dialog">
+      <h3>Open saved run</h3>
+      <div id="open-list" class="open-list"></div>
+      <p id="open-error" class="error" hidden></p>
+      <div class="actions">
+        <button value="cancel" class="btn">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="/objdash/app.js"></script>
+</body>
+</html>
