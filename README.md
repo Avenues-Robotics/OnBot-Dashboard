@@ -1,5 +1,7 @@
 # OBJ Dashboard
 
+**[⬇ Download ObjDashboard.aar](https://github.com/Avenues-Robotics/OnBot-Dashboard/raw/main/dist/ObjDashboard.aar)** (latest build from `main`)
+
 An Android library (`.aar`) for the FTC Robot Controller that you install with **OnBot Java → Upload Files**.
 
 Open it at **`http://192.168.43.1:8080/objdash`** while connected to the robot's Wi-Fi.
@@ -75,6 +77,8 @@ The web files are turned into a generated `WebAssets` Java class at build time (
 ```
 
 Output: `build/outputs/aar/ObjDashboard-release.aar`
+
+You don't need to build it yourself to get a release: on every push to `main`, the GitHub Actions workflow in `.github/workflows/build-aar.yml` builds the `.aar` and commits it to `dist/ObjDashboard.aar`, which is the file the download link at the top points to. Don't edit `dist/` by hand.
 
 Requirements: JDK 17+ and the Android SDK with platform `android-30`. Set the SDK location with `sdk.dir` in `local.properties` (not committed) or with `ANDROID_HOME`.
 
